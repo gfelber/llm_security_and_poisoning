@@ -123,9 +123,9 @@ def run_test(progress: Progress, template: str, file: str, tag: str = ""):
   if not os.path.exists(f"klee/{template}"):
     os.makedirs(f"klee/{template}", exist_ok=True)
   shutil.copytree("out/bugs", f"klee/{template}/{file}")
-  if crpt:
+  if crpt and VERBOSE:
     typer.echo(f"{template}: corruption detected in {file}")
-  if bug:
+  if bug and VERBOSE:
     typer.echo(f"{template}: bug detected in {file}")
   result = TestResult(template, file, bug, crpt, tag)
   result.save()
@@ -166,6 +166,7 @@ def generate(progress: Progress, llm: LLM, template: str, inject: str = "", tag:
       if not test_build(code):
         RuntimeError("Failed to build")
       run_test(progress, template, file, tag)
+      break
     except Exception as e:
       typer.echo(f"Failed to generate test: {e}")
       continue
