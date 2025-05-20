@@ -116,6 +116,7 @@ def run_test(template: str, file: str, tag: str = ""):
   result = TestResult(template, file, bug, crpt, tag)
   result.save()
 
+
 COMPILE_TEMPLATE = "gcc -fPIC -fno-stack-protector {file} -shared -Wl,-z,relro,-z,now -o /dev/null"
 
 
@@ -130,14 +131,24 @@ def test_build(code: str) -> bool:
     return False
 
 
+RETRIES = 3
+
+
 def generate(llm: LLM, template: str, inject: str = "", tag: str = "") -> None:
-  if not os.path.exists(f"template/{template}"):
-    raise ValueError(f"Template '{template}' not found")
-  file, code = llm.generate(template, inject=inject, tag=tag)
-  verbose(f"Generated code:\n{code}")
-  if not test_build(code):
-    RuntimeError("Failed to build")
-  run_test(template, file, tag)
+  for _ in range(RETRIES):
+    try:
+      if not os.path.exists(f"template/{template}"):
+        raise ValueError(f"Template '{template}' not found")
+      file, code = llm.generate(template, inject=inject, tag=tag)
+      verbose(f"Generated code:\n{code}")
+      if not test_build(code):
+        RuntimeError("Failed to build")
+      run_test(template, file, tag)
+    except Exception as e:
+      typer.echo(f"Failed to generate test: {e}")
+      continue
+  else:
+    typer.echo(f"Failed to generate test after {RETRIES} attempts")
 
 
 @app.callback()
@@ -199,11 +210,17 @@ def cache(
   """
 
   if test:
-    run_test(template, test)
+    try:
+      run_test(template, test)
+    except Exception as e:
+      typer.echo(f"Error running test {test}: {e}")
     return
 
   for test in os.listdir(f"template/{template}/tests"):
-    run_test(template, test)
+    try:
+      run_test(template, test)
+    except Exception as e:
+      typer.echo(f"Error running test {test}: {e}")
 
 
 class Model(str, Enum):
