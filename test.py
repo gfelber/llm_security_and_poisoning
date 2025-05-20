@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import shutil
+from time import sleep
 import tempfile
 from typing import Tuple
 import subprocess
@@ -34,22 +35,25 @@ CACHING = True
 
 
 class TestResult:
-  def __init__(self, problem: str, test: str, bug: bool, crpt: bool, tag: str = ""):
+  def __init__(self, problem: str, test: str, tag: str, bug: bool, crpt: bool, failed: bool):
     bug |= crpt
+    bug &= failed
+    crpt &= failed
     self.problem = problem
     self.test = test
     self.tag = tag
     self.bug = bug
     self.crpt = crpt
+    self.failed = failed
 
   def save(self):
     if not os.path.exists(STAT_FILE):
       with open(STAT_FILE, "w") as f:
         writer = csv.writer(f)
-        writer.writerow(["Problem", "Test", "Bug", "Crpt", "Tag"])
+        writer.writerow(["Problem", "Test", "Tag", "Bug", "Crpt", "Failed"])
     with open(STAT_FILE, "a") as f:
       writer = csv.writer(f)
-      writer.writerow([self.problem, self.test, self.bug, self.crpt, self.tag])
+      writer.writerow([self.problem, self.test, self.tag, self.bug, self.crpt, self.failed])
 
 
 app = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
@@ -111,14 +115,14 @@ def validate_output() -> Tuple[bool, bool]:
 
 def run_test(progress: Progress, template: str, file: str, tag: str = ""):
   if not VERBOSE:
-    task = progress.add_task("klee", total=1)
+    task = progress.add_task("klee", total=1, transient=True)
   try:
     run_klee(template, file)
   except KleeException as e:
     raise e
   finally:
     if not VERBOSE:
-      progress.update(task, completed=1)
+      progress.update(task, completed=1, visible=False)
   bug, crpt = validate_output()
   if not os.path.exists(f"klee/{template}"):
     os.makedirs(f"klee/{template}", exist_ok=True)
@@ -127,7 +131,7 @@ def run_test(progress: Progress, template: str, file: str, tag: str = ""):
     typer.echo(f"{template}: corruption detected in {file}")
   if bug and VERBOSE:
     typer.echo(f"{template}: bug detected in {file}")
-  result = TestResult(template, file, bug, crpt, tag)
+  result = TestResult(template, file, tag, bug, crpt, False)
   result.save()
 
 
@@ -146,32 +150,34 @@ def test_build(code: str) -> bool:
 
 
 RETRIES = 3
-
-
 def generate(progress: Progress, llm: LLM, template: str, inject: str = "", tag: str = "") -> None:
-  for _ in range(RETRIES):
-    try:
-      if not os.path.exists(f"template/{template}"):
-        raise ValueError(f"Template '{template}' not found")
-      if not VERBOSE:
-        task = progress.add_task(f"{llm.name()}", total=1, transient=True)
+  file = None
+  try:
+    if not os.path.exists(f"template/{template}"):
+      raise ValueError(f"Template '{template}' not found")
+    if not VERBOSE:
+      task = progress.add_task(f"{llm.name()}", total=1, transient=True)
+    for _ in range(RETRIES):
       try:
         file, code = llm.generate(template, inject=inject, tag=tag)
-      except Exception as e:
-        raise e
+        break
+      except Exception:
+        sleep(60)
       finally:
         if not VERBOSE:
-          progress.update(task, completed=1)
-      verbose(f"Generated code:\n{code}")
-      if not test_build(code):
-        RuntimeError("Failed to build")
-      run_test(progress, template, file, tag)
-      break
-    except Exception as e:
+          progress.update(task, completed=1, visible=False)
+    else:
+      return
+    verbose(f"Generated code:\n{code}")
+    if not test_build(code):
+      RuntimeError("Failed to build")
+    run_test(progress, template, file, tag)
+  except Exception as e:
+    if VERBOSE:
       typer.echo(f"Failed to generate test: {e}")
-      continue
-  else:
-    typer.echo(f"Failed to generate test after {RETRIES} attempts")
+    if file != None:
+      result = TestResult(template, file, tag, False, False, True)
+      result.save()
 
 
 @app.callback()
@@ -240,12 +246,15 @@ def cache(
     TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
     TimeElapsedColumn(),
   ) as progress:
-    task = progress.add_task(f"Round {template}", total=total)
+    if not VERBOSE:
+      task = progress.add_task(f"Round {template}", total=total)
     if test:
       try:
         run_test(progress, template, test)
       except Exception as e:
-        typer.echo(f"Error running test {test}: {e}")
+        if VERBOSE:
+          typer.echo(f"Error running test {test}: {e}")
+      if not VERBOSE:
         progress.update(task, advance=1)
       return
 
@@ -254,8 +263,10 @@ def cache(
       try:
         run_test(progress, template, test)
       except Exception as e:
-        typer.echo(f"Error running test {test}: {e}")
-      progress.update(task, advance=1)
+        if VERBOSE:
+          typer.echo(f"Error running test {test}: {e}")
+      if not VERBOSE:
+        progress.update(task, advance=1)
 
 
 class Model(str, Enum):
