@@ -1,3 +1,5 @@
 test/
+Dockerfile
+__pycache__/
 out/
 out-*/
