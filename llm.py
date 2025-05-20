@@ -3,7 +3,6 @@ from openai import OpenAI
 from abc import ABC
 from typing import Optional, Tuple
 import os
-from rich.progress import Progress, SpinnerColumn, TextColumn
 import re
 
 DEFAULT_SYSTEM = """your a C programmer that returns C code for the described problem statement
@@ -25,19 +24,12 @@ class LLM(ABC):
   ) -> Tuple[str, str]:
     with open(f"template/{template}/problem.md", "r") as f:
       problem = f.read()
-    with Progress(
-      SpinnerColumn(),
-      TextColumn("[progress.description]{task.description}"),
-      transient=True,
-    ) as progress:
-      task = progress.add_task(f"{self.name()}: Generating Code", total=None)
-      code = self._generate(problem, inject)
-      code = parse_code(code)
-      if code is None:
-        raise ValueError("No code found")
-      progress.update(task, completed=1)
-      filename = self.cache(code, template, tag)
-      return filename, code
+    code = self._generate(problem, inject)
+    code = parse_code(code)
+    if code is None:
+      raise ValueError("No code found")
+    filename = self.cache(code, template, tag)
+    return filename, code
 
   def _generate(self, problem: str, inject: Optional[str] = None) -> str:
     return ""

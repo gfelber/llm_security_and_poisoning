@@ -1,4 +1,4 @@
-KLEE_FLAGS = --libc=uclibc --only-output-states-covering-new --posix-runtime --max-time=8
+KLEE_FLAGS = --libc=uclibc --posix-runtime --max-time=32
 
 all: bugs
 
@@ -22,6 +22,9 @@ out:
 
 docker: clean
 	docker build --quiet --ulimit='stack=-1:-1' --target export -t klee-benchmark --output out .
+
+docker-verbose: clean
+	docker build --ulimit='stack=-1:-1' --target export -t klee-benchmark --output out .
 
 clean:
 	rm -rf out || true

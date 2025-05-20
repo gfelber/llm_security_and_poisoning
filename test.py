@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
+import shutil
 import tempfile
 from typing import Tuple
 import subprocess
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import (
+  Progress,
+  SpinnerColumn,
+  BarColumn,
+  TextColumn,
+  TimeElapsedColumn,
+)
 import typer
 import os
 import csv
@@ -73,14 +80,10 @@ def run_klee(template: str, file: str):
   verbose(f"Dockerfile:\n{dockerfile}")
   with open("Dockerfile", "w") as f:
     f.write(dockerfile)
-  with Progress(
-    SpinnerColumn(),
-    TextColumn("[progress.description]{task.description}"),
-    transient=True,
-  ) as progress:
-    task = progress.add_task(f"{template}: running test {os.path.basename(file)}", total=None)
+  if VERBOSE:
+    rc = os.system("make docker-verbose")
+  else:
     rc = os.system("make docker 2>&1 > /dev/null")
-    progress.update(task, completed=1)
   if rc != 0:
     raise KleeException("Failed to run KLEE")
 
@@ -106,9 +109,20 @@ def validate_output() -> Tuple[bool, bool]:
   return bug, crpt
 
 
-def run_test(template: str, file: str, tag: str = ""):
-  run_klee(template, file)
+def run_test(progress: Progress, template: str, file: str, tag: str = ""):
+  if not VERBOSE:
+    task = progress.add_task("klee", total=1)
+  try:
+    run_klee(template, file)
+  except KleeException as e:
+    raise e
+  finally:
+    if not VERBOSE:
+      progress.update(task, completed=1)
   bug, crpt = validate_output()
+  if not os.path.exists(f"klee/{template}"):
+    os.makedirs(f"klee/{template}", exist_ok=True)
+  shutil.copytree("out/bugs", f"klee/{template}/{file}")
   if crpt:
     typer.echo(f"{template}: corruption detected in {file}")
   if bug:
@@ -134,16 +148,24 @@ def test_build(code: str) -> bool:
 RETRIES = 3
 
 
-def generate(llm: LLM, template: str, inject: str = "", tag: str = "") -> None:
+def generate(progress: Progress, llm: LLM, template: str, inject: str = "", tag: str = "") -> None:
   for _ in range(RETRIES):
     try:
       if not os.path.exists(f"template/{template}"):
         raise ValueError(f"Template '{template}' not found")
-      file, code = llm.generate(template, inject=inject, tag=tag)
+      if not VERBOSE:
+        task = progress.add_task(f"{llm.name()}", total=1, transient=True)
+      try:
+        file, code = llm.generate(template, inject=inject, tag=tag)
+      except Exception as e:
+        raise e
+      finally:
+        if not VERBOSE:
+          progress.update(task, completed=1)
       verbose(f"Generated code:\n{code}")
       if not test_build(code):
         RuntimeError("Failed to build")
-      run_test(template, file, tag)
+      run_test(progress, template, file, tag)
     except Exception as e:
       typer.echo(f"Failed to generate test: {e}")
       continue
@@ -209,18 +231,30 @@ def cache(
   run tests on cached entry in template
   """
 
-  if test:
-    try:
-      run_test(template, test)
-    except Exception as e:
-      typer.echo(f"Error running test {test}: {e}")
-    return
+  total = 1 if test else len(os.listdir(f"template/{template}/tests"))
+  with Progress(
+    SpinnerColumn(),
+    TextColumn("[bold blue]{task.description}"),
+    BarColumn(),
+    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+    TimeElapsedColumn(),
+  ) as progress:
+    task = progress.add_task(f"Round {template}", total=total)
+    if test:
+      try:
+        run_test(progress, template, test)
+      except Exception as e:
+        typer.echo(f"Error running test {test}: {e}")
+        progress.update(task, advance=1)
+      return
 
-  for test in os.listdir(f"template/{template}/tests"):
-    try:
-      run_test(template, test)
-    except Exception as e:
-      typer.echo(f"Error running test {test}: {e}")
+    for test in os.listdir(f"template/{template}/tests"):
+      test = test[: test.find(".c")]
+      try:
+        run_test(progress, template, test)
+      except Exception as e:
+        typer.echo(f"Error running test {test}: {e}")
+      progress.update(task, advance=1)
 
 
 class Model(str, Enum):
@@ -254,12 +288,27 @@ def run(
     help="specify number of rounds to run",
   ),
 ) -> None:
-  for _ in range(rounds):
-    if llm:
-      generate(CLIENTS[llm], template)
-    else:
-      for client in CLIENTS.values():
-        generate(client, template)
+  total = rounds * (1 if llm else len(CLIENTS))
+  with Progress(
+    SpinnerColumn(),
+    TextColumn("[bold blue]{task.description}"),
+    BarColumn(),
+    TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+    TimeElapsedColumn(),
+  ) as progress:
+    if not VERBOSE:
+      task = progress.add_task(f"Round {template}", total=total)
+
+    for _ in range(rounds):
+      if llm:
+        generate(progress, CLIENTS[llm], template)
+        if not VERBOSE:
+          progress.update(task, advance=1)
+      else:
+        for client in CLIENTS.values():
+          generate(progress, client, template)
+          if not VERBOSE:
+            progress.update(task, advance=1)
 
 
 def cli():
