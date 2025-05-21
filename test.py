@@ -37,8 +37,8 @@ CACHING = True
 class TestResult:
   def __init__(self, problem: str, test: str, tag: str, bug: bool, crpt: bool, failed: bool):
     bug |= crpt
-    bug &= failed
-    crpt &= failed
+    bug &= not failed
+    crpt &= not failed
     self.problem = problem
     self.test = test
     self.tag = tag
@@ -91,15 +91,11 @@ def run_klee(template: str, file: str):
   if rc != 0:
     raise KleeException("Failed to run KLEE")
 
-
-KLEE_LOG = "./out/bugs/messages.txt"
-
-
-def validate_output() -> Tuple[bool, bool]:
-  if not os.path.exists(KLEE_LOG):
+def validate_output(file: str) -> Tuple[bool, bool]:
+  if not os.path.exists(file):
     raise KleeException("Failed to generate output")
 
-  with open(KLEE_LOG, "r") as f:
+  with open(file, "r") as f:
     content = f.read()
 
   crpt = False
@@ -114,19 +110,21 @@ def validate_output() -> Tuple[bool, bool]:
 
 
 def run_test(progress: Progress, template: str, file: str, tag: str = ""):
-  if not VERBOSE:
-    task = progress.add_task("klee", total=1, transient=True)
-  try:
-    run_klee(template, file)
-  except KleeException as e:
-    raise e
-  finally:
+  if not os.path.exists(f"klee/{template}/{file}"):
     if not VERBOSE:
-      progress.update(task, completed=1, visible=False)
-  bug, crpt = validate_output()
-  if not os.path.exists(f"klee/{template}"):
-    os.makedirs(f"klee/{template}", exist_ok=True)
-  shutil.copytree("out/bugs", f"klee/{template}/{file}")
+      task = progress.add_task("klee", total=1, transient=True)
+    try:
+      run_klee(template, file)
+    except KleeException as e:
+      raise e
+    finally:
+      if not VERBOSE:
+        progress.update(task, completed=1, visible=False)
+    if not os.path.exists(f"klee/{template}"):
+      os.makedirs(f"klee/{template}", exist_ok=True)
+    shutil.copytree("out/bugs", f"klee/{template}/{file}")
+
+  bug, crpt = validate_output(f"klee/{template}/{file}/messages.txt")
   if crpt and VERBOSE:
     typer.echo(f"{template}: corruption detected in {file}")
   if bug and VERBOSE:
