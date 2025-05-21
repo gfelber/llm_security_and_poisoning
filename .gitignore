@@ -1,5 +1,5 @@
 test/
-statistics.csv.lock
+statistic.csv.lock
 Dockerfile
 __pycache__/
 out/
