@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from angr.calling_conventions import CC
 from rich.progress import (
   Progress,
   SpinnerColumn,
@@ -298,7 +297,7 @@ CLIENTS = {
 }
 
 
-def run_worker(template:str, skip:bool, name: Model):
+def run_worker(template: str, skip: bool, name: Model):
   try:
     generate(CLIENTS[name], template, skip=skip)
     return (name, None)
