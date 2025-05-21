@@ -1,4 +1,6 @@
-KLEE_FLAGS = --libc=uclibc --only-output-states-covering-new  --posix-runtime
+KLEE_FLAGS = --libc=uclibc --only-output-states-covering-new --search=dfs  --posix-runtime
+OUTDIR ?= out
+DOCKERFILE ?= .
 
 all: bugs
 
@@ -18,13 +20,13 @@ out/test.bc: test.c out
 	clang test.c -emit-llvm -c -g -o out/test.bc
 
 out:
-	mkdir out
+	mkdir ${OUTDIR}
 
 docker: clean
-	docker build --quiet --ulimit='stack=-1:-1' --target export -t klee-benchmark --output out .
+	docker build --quiet --ulimit='stack=-1:-1' --target export -t klee-benchmark --output ${OUTDIR} ${DOCKERFILE}
 
 docker-verbose: clean
-	docker build --ulimit='stack=-1:-1' --target export -t klee-benchmark --output out .
+	docker build --ulimit='stack=-1:-1' --target export -t klee-benchmark --output ${OUTDIR} ${DOCKERFILE}
 
 clean:
-	rm -rf out || true
+	rm -rf ${OUTDIR} || true

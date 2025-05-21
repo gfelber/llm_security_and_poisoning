@@ -43,12 +43,20 @@ char **unique_words_oracle(char *sentence) {
     count += 1;
   }
   if (strlen(sentence) > 0) {
-    words[count] = strdup(sentence);
-    if (!words[count]) {
-      free(words);
-      return NULL;
+    for (size_t i = 0; i < count; i++) {
+      if (strcmp(words[i], sentence) == 0) {
+        sentence = NULL;
+        break;
+      }
     }
-    count += 1;
+    if (sentence != NULL) {
+      words[count] = strdup(sentence);
+      if (!words[count]) {
+        free(words);
+        return NULL;
+      }
+      count += 1;
+    }
   }
 
   words[count] = NULL;
