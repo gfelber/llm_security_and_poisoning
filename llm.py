@@ -80,7 +80,7 @@ class ChatGPT(LLM):
 
   def _generate(self, problem: str, inject: Optional[str] = None) -> str:
     return self.client.responses.create(
-      model="gpt-4.5-preview",
+      model="gpt-4o",
       instructions=DEFAULT_SYSTEM + ("\n" + inject if inject else ""),
       input=problem,
     ).output_text
