@@ -323,7 +323,7 @@ def run(
     help="specify LLM to use",
   ),
   tags: Optional[List[Inject]] = typer.Option(
-    None,
+    [],
     "--tag",
     "-t",
     help="specify which injection to use",
@@ -347,8 +347,6 @@ def run(
     help="skip running tests",
   ),
 ) -> None:
-  if tags is None:
-    tags = list()
   if llms:
     tasks = [llm for _ in range(rounds) for llm in llms]
   else:
