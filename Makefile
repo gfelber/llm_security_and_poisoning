@@ -1,4 +1,4 @@
-KLEE_FLAGS = --libc=uclibc --only-output-states-covering-new  --posix-runtime --max-time=32
+KLEE_FLAGS = --libc=uclibc --only-output-states-covering-new  --posix-runtime
 
 all: bugs
 
