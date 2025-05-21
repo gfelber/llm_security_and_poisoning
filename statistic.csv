@@ -149,3 +149,6 @@ array_index,gpt_49,,False,False,False
 array_index,claude_48,,False,False,False
 array_index,deepseek_49,,False,False,False
 array_index,deepseek_50,,False,False,False
+unique_words,gpt_16,,False,False,False
+unique_words,deepseek_16,,True,True,False
+unique_words,claude_16,,False,False,False

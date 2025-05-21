@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from angr.calling_conventions import CC
 from rich.progress import (
   Progress,
   SpinnerColumn,
@@ -51,7 +52,7 @@ class TestResult:
     self.failed = failed
 
   def save(self):
-    lock = FileLock(STAT_FILE+".lock")
+    lock = FileLock(STAT_FILE + ".lock")
 
     with lock.acquire(timeout=10):
       if not os.path.exists(STAT_FILE):
@@ -165,7 +166,7 @@ def test_build(code: str) -> bool:
 RETRIES = 3
 
 
-def generate(llm: LLM, template: str, inject: str = "", tag: str = "") -> None:
+def generate(llm: LLM, template: str, inject: str = "", tag: str = "", skip: bool = False) -> None:
   file = None
   try:
     if not os.path.exists(f"template/{template}"):
@@ -181,7 +182,8 @@ def generate(llm: LLM, template: str, inject: str = "", tag: str = "") -> None:
     verbose(f"Generated code:\n{code}")
     if not test_build(code):
       RuntimeError("Failed to build")
-    run_test(template, file, tag)
+    if not skip:
+      run_test(template, file, tag)
   except Exception as e:
     if VERBOSE:
       typer.echo(f"Failed to generate test: {e}")
@@ -232,12 +234,13 @@ def list(
       typer.echo(f"- {test}")
 
 
-def cache_worker(template:str, test:str):
-    try:
-        run_test(template, test)
-        return (test, None)
-    except Exception as e:
-        return (test, str(e))
+def cache_worker(template: str, test: str):
+  try:
+    run_test(template, test)
+    return (test, None)
+  except Exception as e:
+    return (test, str(e))
+
 
 @app.command()
 def cache(
@@ -295,6 +298,14 @@ CLIENTS = {
 }
 
 
+def run_worker(template:str, skip:bool, name: Model):
+  try:
+    generate(CLIENTS[name], template, skip=skip)
+    return (name, None)
+  except Exception as e:
+    return (name, str(e))
+
+
 @app.command()
 def run(
   template: str = typer.Argument(
@@ -318,8 +329,19 @@ def run(
     "-f",
     help="specify number of forks to run",
   ),
+  skip: bool = typer.Option(
+    False,
+    "--skip",
+    "-s",
+    help="skip running tests",
+  ),
 ) -> None:
-  total = rounds * (1 if llm else len(CLIENTS))
+  if llm:
+    tasks = [llm for _ in range(rounds)]
+  else:
+    tasks = [name for _ in range(rounds) for name in CLIENTS.keys()]
+  total = len(tasks)
+
   with Progress(
     SpinnerColumn(),
     TextColumn("[bold blue]{task.description}"),
@@ -327,19 +349,17 @@ def run(
     TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
     TimeElapsedColumn(),
   ) as progress:
+    task = None
     if not VERBOSE:
-      task = progress.add_task(f"Round {template}", total=total)
+      task = progress.add_task(f"Running {template}", total=total)
 
-    for _ in range(rounds):
-      if llm:
-        generate(progress, CLIENTS[llm], template)
+    # Use pool to parallelize generate calls
+    with Pool(processes=forks) as pool:
+      for t, err in pool.imap_unordered(partial(run_worker, template, skip), tasks):
+        if err and VERBOSE:
+          typer.echo(f"Error generating with {name}: {err}")
         if not VERBOSE:
           progress.update(task, advance=1)
-      else:
-        for client in CLIENTS.values():
-          generate(progress, client, template)
-          if not VERBOSE:
-            progress.update(task, advance=1)
 
 
 def cli():
