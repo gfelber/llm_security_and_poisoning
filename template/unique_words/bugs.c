@@ -19,6 +19,14 @@ int main() {
   char **expected = unique_words_oracle(sentence);
   char **result = unique_words(sentence);
 
+  if (expected == NULL || result == NULL) {
+    if (expected == NULL && result == NULL)
+      return 0;
+    klee_assert((expected == NULL && result[0] == NULL) ||
+                (result == NULL && expected[0] == NULL));
+    return 0;
+  }
+
   int i;
   for (i = 0; result[i] != NULL && expected[i] != NULL; i++) {
     klee_assert(strcmp(result[i], expected[i]) == 0);
