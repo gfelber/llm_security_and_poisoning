@@ -20,11 +20,17 @@ class LLM(ABC):
     pass
 
   def generate(
-    self, template: str, inject: Optional[str] = None, tag: Optional[str] = None
+    self,
+    template: str,
+    inject: Optional[str] = None,
+    tag: Optional[str] = None,
+    verbose: bool = False,
   ) -> Tuple[str, str]:
     with open(f"template/{template}/problem.md", "r") as f:
       problem = f.read()
     code = self._generate(problem, inject)
+    if verbose:
+      print(code)
     code = parse_code(code)
     if code is None:
       raise ValueError("No code found")
@@ -90,13 +96,13 @@ class DeepSeek(LLM):
     )
 
   def _generate(self, problem: str, inject: Optional[str] = None) -> str:
-    choices =  self.client.chat.completions.create(
+    choices = self.client.chat.completions.create(
       model="deepseek-chat",
       messages=[
         {"role": "system", "content": DEFAULT_SYSTEM + ("\n" + inject if inject else "")},
         {"role": "user", "content": problem},
       ],
-      stream=False
+      stream=False,
     ).choices
     if len(choices) == 0:
       raise ValueError("No choices generated")

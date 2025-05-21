@@ -6,10 +6,10 @@ from rich.progress import (
   TextColumn,
   TimeElapsedColumn,
 )
+from typing import Tuple, List, Optional
 from multiprocessing import Pool
 from filelock import FileLock
 from functools import partial
-from typing import Tuple
 from time import sleep
 from enum import Enum
 import subprocess
@@ -19,6 +19,7 @@ import typer
 import csv
 import os
 
+from inject import INJECTS, Inject
 from llm import LLM, ChatGPT, Claude, DeepSeek
 
 
@@ -172,13 +173,12 @@ def generate(llm: LLM, template: str, inject: str = "", tag: str = "", skip: boo
       raise ValueError(f"Template '{template}' not found")
     for _ in range(RETRIES):
       try:
-        file, code = llm.generate(template, inject=inject, tag=tag)
+        file, code = llm.generate(template, inject=inject, tag=tag, verbose=VERBOSE)
         break
       except Exception:
         sleep(60)
     else:
       return
-    verbose(f"Generated code:\n{code}")
     if not test_build(code):
       RuntimeError("Failed to build")
     if not skip:
@@ -297,9 +297,15 @@ CLIENTS = {
 }
 
 
-def run_worker(template: str, skip: bool, name: Model):
+def run_worker(template: str, skip: bool, tags: List[Inject], name: Model = Model.chatgpt):
   try:
-    generate(CLIENTS[name], template, skip=skip)
+    generate(
+      CLIENTS[name],
+      template,
+      inject="\n".join(INJECTS[tag] for tag in tags),
+      tag="_".join(tag.value for tag in tags),
+      skip=skip,
+    )
     return (name, None)
   except Exception as e:
     return (name, str(e))
@@ -310,11 +316,17 @@ def run(
   template: str = typer.Argument(
     help="specify template to run cache on",
   ),
-  llm: Model = typer.Option(
+  llms: Optional[List[Model]] = typer.Option(
     None,
     "--llm",
     "-l",
     help="specify LLM to use",
+  ),
+  tags: Optional[List[Inject]] = typer.Option(
+    None,
+    "--tag",
+    "-t",
+    help="specify which injection to use",
   ),
   rounds: int = typer.Option(
     1,
@@ -335,8 +347,10 @@ def run(
     help="skip running tests",
   ),
 ) -> None:
-  if llm:
-    tasks = [llm for _ in range(rounds)]
+  if tags is None:
+    tags = list()
+  if llms:
+    tasks = [llm for _ in range(rounds) for llm in llms]
   else:
     tasks = [name for _ in range(rounds) for name in CLIENTS.keys()]
   total = len(tasks)
@@ -354,7 +368,7 @@ def run(
 
     # Use pool to parallelize generate calls
     with Pool(processes=forks) as pool:
-      for t, err in pool.imap_unordered(partial(run_worker, template, skip), tasks):
+      for t, err in pool.imap_unordered(partial(run_worker, template, skip, tags), tasks):
         if err and VERBOSE:
           typer.echo(f"Error generating with {name}: {err}")
         if not VERBOSE:
