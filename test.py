@@ -45,7 +45,7 @@ class TestResult:
     bug &= not failed
     crpt &= not failed
     self.problem = problem
-    self.llm = test[:test.find["_"]]
+    self.llm = test[:test.find("_")]
     self.test = test
     self.tag = tag
     self.bug = bug
