@@ -136,6 +136,8 @@ def run_test(template: str, file: str, tag: str = ""):
     try:
       run_klee(template, file)
     except KleeException as e:
+      result = TestResult(template, file, tag, False, False, True)
+      result.save()
       raise e
     if not os.path.exists(f"klee/{template}"):
       os.makedirs(f"klee/{template}", exist_ok=True)
