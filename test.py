@@ -45,6 +45,7 @@ class TestResult:
     bug &= not failed
     crpt &= not failed
     self.problem = problem
+    self.llm = test[:test.find["_"]]
     self.test = test
     self.tag = tag
     self.bug = bug
@@ -58,10 +59,10 @@ class TestResult:
       if not os.path.exists(STAT_FILE):
         with open(STAT_FILE, "w") as f:
           writer = csv.writer(f)
-          writer.writerow(["Problem", "Test", "Tag", "Bug", "Crpt", "Failed"])
+          writer.writerow(["Problem", "LLM", "Test", "Tag", "Bug", "Crpt", "Failed"])
       with open(STAT_FILE, "a") as f:
         writer = csv.writer(f)
-        writer.writerow([self.problem, self.test, self.tag, self.bug, self.crpt, self.failed])
+        writer.writerow([self.problem, self.llm, self.test, self.tag, self.bug, self.crpt, self.failed])
 
 
 app = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
