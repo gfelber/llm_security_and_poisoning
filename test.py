@@ -242,7 +242,7 @@ def list(
 
 def cache_worker(template: str, test: str):
   try:
-    run_test(template, test, tag=test[test.find("_")+1:])
+    run_test(template, test, tag=test[test.find("_")+1:test.rfind("_")])
     return (test, None)
   except Exception as e:
     return (test, str(e))
