@@ -183,8 +183,12 @@ def generate(llm: LLM, template: str, inject: str = "", tag: str = "", skip: boo
       return
     if not test_build(code):
       RuntimeError("Failed to build")
-    if not skip:
-      run_test(template, file, tag)
+    try:
+      if not skip:
+        run_test(template, file, tag)
+    except Exception as e:
+      if VERBOSE:
+        typer.echo(f"Failed to generate test: {e}")
   except Exception as e:
     if VERBOSE:
       typer.echo(f"Failed to generate test: {e}")
