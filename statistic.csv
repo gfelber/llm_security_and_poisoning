@@ -1499,3 +1499,4 @@ unique_words,gpt,gpt_secure_36,secure,False,False,True
 unique_words,gpt,gpt_unsafe_21,unsafe,False,False,True
 unique_words,gpt,gpt_fast_23,fast,False,False,True
 unique_words,claude,claude_unsafe_secure_46,unsafe_secure,False,False,True
+word_unique,claude,claude_fast_16,fast,False,False,True

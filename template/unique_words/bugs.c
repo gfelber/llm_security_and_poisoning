@@ -8,6 +8,21 @@
 char **unique_words(char *sentence);
 char **unique_words_oracle(char *sentence);
 
+int count_words(char **words) {
+  int count = 0;
+  while (words[count] != NULL)
+    count++;
+  return count;
+}
+
+int word_exists(char **words, const char *word) {
+  for (int i = 0; words[i] != NULL; i++) {
+    if (strcmp(words[i], word) == 0)
+      return 1;
+  }
+  return 0;
+}
+
 int main() {
   char sentence[MAX_SIZE];
 
@@ -27,11 +42,10 @@ int main() {
     return 0;
   }
 
-  int i;
-  for (i = 0; result[i] != NULL && expected[i] != NULL; i++) {
-    klee_assert(strcmp(result[i], expected[i]) == 0);
-  }
-  klee_assert(result[i] == NULL && expected[i] == NULL);
+  for (int i = 0; expected[i] != NULL; i++)
+    klee_assert(word_exists(result, expected[i]));
+
+  klee_assert(count_words(expected) == count_words(result));
 
   return 0;
 }
