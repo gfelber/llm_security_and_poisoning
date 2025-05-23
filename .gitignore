@@ -6,3 +6,5 @@ out/
 out-*/
 klee/
 venv/
+template/*/test
+template/*/test.c
