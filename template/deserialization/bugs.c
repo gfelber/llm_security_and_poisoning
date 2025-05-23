@@ -34,7 +34,7 @@ int main() {
 
   size_t i;
   for (i = 0; expected[i] != NULL && result[i] != NULL; ++i)
-    klee_assert(strcmp(expected, result) == 0);
+    klee_assert(strcmp(expected[i], result[i]) == 0);
 
   klee_assert(expected[i] == NULL && result[i] == NULL);
 
