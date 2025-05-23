@@ -1,4 +1,4 @@
-KLEE_FLAGS = --libc=uclibc --only-output-states-covering-new --search=dfs --posix-runtime --max-time=3000
+KLEE_FLAGS = --libc=uclibc --only-output-states-covering-new --search=dfs --posix-runtime --max-time=1800
 OUTDIR ?= out
 DOCKERFILE ?= .
 
