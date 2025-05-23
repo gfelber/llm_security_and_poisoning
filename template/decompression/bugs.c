@@ -17,7 +17,7 @@ int main() {
     char chr = compressed[i];
     klee_assume(chr != 0);
     if (i & 1)
-      klee_assume(chr == -1 || (0 < chr && chr <= 3));
+      klee_assume(chr == -1 || chr == 1 || chr == 2 || chr == 3);
     else
       klee_assume(chr == -1 || chr == -2 || chr == -3 || chr == 'a' ||
                   chr == 'b' || chr == 'c' || chr == 'd');
