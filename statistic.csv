@@ -1593,3 +1593,8 @@ decompression,deepseek,deepseek_32,,True,False,False
 decompression,claude,claude_27,,True,False,False
 decompression,deepseek,deepseek_33,,False,False,False
 decompression,gpt,gpt_34,,True,False,False
+decompression,deepseek,deepseek_34,,False,False,False
+decompression,claude,claude_29,,True,False,False
+decompression,claude,claude_30,,True,False,False
+decompression,gpt,gpt_35,,True,True,False
+decompression,deepseek,deepseek_35,,False,False,False
