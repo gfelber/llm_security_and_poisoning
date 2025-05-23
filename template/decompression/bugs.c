@@ -30,7 +30,7 @@ int main() {
   if (expected == NULL || result == NULL) {
     klee_assert((expected == NULL && result == NULL) ||
                 (expected == NULL && result[0] == 0) ||
-                (expected[0] == 0 && result == NULL));
+                (result == NULL && expected[0] == 0));
     return 0;
   }
 
