@@ -14,6 +14,7 @@ from time import sleep
 from enum import Enum
 import subprocess
 import tempfile
+import random
 import shutil
 import typer
 import csv
@@ -179,7 +180,7 @@ def generate(llm: LLM, template: str, inject: str = "", tag: str = "", skip: boo
         file, code = llm.generate(template, inject=inject, tag=tag, verbose=VERBOSE)
         break
       except Exception:
-        sleep(60)
+        sleep(60 + random.randint(0, 60))
     else:
       return
     if not test_build(code):
