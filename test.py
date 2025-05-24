@@ -167,7 +167,7 @@ def test_build(code: str) -> bool:
     return False
 
 
-RETRIES = 3
+RETRIES = 10
 
 
 def generate(llm: LLM, template: str, inject: str = "", tag: str = "", skip: bool = False) -> None:
