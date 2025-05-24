@@ -19,7 +19,7 @@ int main() {
 
   for (size_t i = 0; i < MAX_SIZE; ++i) {
     char chr = serialized[i];
-    klee_assume(chr == 'x' || ((0 < chr) && (chr < (MAX_SIZE - 1))));
+    klee_assume(chr == 'x' || ((0 <= chr) && (chr < (MAX_SIZE - 1))));
   }
 
   char **expected = deserialize(serialized, size);
