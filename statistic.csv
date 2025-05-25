@@ -2999,3 +2999,4 @@ deserialization,claude,claude_unsafe_secure_50,unsafe_secure,False,False,False
 deserialization,deepseek,deepseek_unsafe_secure_49,unsafe_secure,False,False,False
 deserialization,gpt,gpt_unsafe_secure_49,unsafe_secure,False,False,False
 deserialization,deepseek,deepseek_unsafe_secure_50,unsafe_secure,False,False,False
+deserialization,gpt,gpt_unsafe_secure_50,unsafe_secure,False,False,False
