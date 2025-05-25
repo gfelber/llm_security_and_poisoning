@@ -2850,7 +2850,6 @@ deserialization,deepseek,deepseek_secure_49,secure,True,False,False
 deserialization,gpt,gpt_secure_50,secure,True,False,False
 deserialization,deepseek,deepseek_secure_50,secure,True,False,False
 deserialization,gpt,gpt_unsafe_secure_5,unsafe_secure,False,False,True
-deserialization,gpt,gpt_unsafe_secure_5,unsafe_secure,False,False,True
 deserialization,gpt,gpt_unsafe_secure_4,unsafe_secure,True,True,False
 deserialization,gpt,gpt_unsafe_secure_6,unsafe_secure,True,True,False
 deserialization,gpt,gpt_unsafe_secure_1,unsafe_secure,True,True,False
