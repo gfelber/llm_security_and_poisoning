@@ -298,11 +298,20 @@ class Model(str, Enum):
   deepseek = "deepseek"
 
 
-CLIENTS = {
-  Model.claude: Claude(),
-  Model.chatgpt: ChatGPT(),
-  Model.deepseek: DeepSeek(),
+LLMS = {
+  Model.claude: Claude, Model.chatgpt: ChatGPT, Model.deepseek: DeepSeek
 }
+
+CLIENTS = dict()
+
+def init_clients(llms: Optional[List[Model]] = None):
+  if llms is None:
+    for llm in LLMS.keys():
+      CLIENTS[llm] = LLMS[llm]()
+    return
+
+  for llm in llms:
+    CLIENTS[llm] = LLMS[llm]()
 
 
 def run_worker(template: str, skip: bool, tags: List[Inject], name: Model = Model.chatgpt):
@@ -355,6 +364,7 @@ def run(
     help="skip running tests",
   ),
 ) -> None:
+  init_clients(llms)
   if llms:
     tasks = [llm for _ in range(rounds) for llm in llms]
   else:

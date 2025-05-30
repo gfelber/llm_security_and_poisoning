@@ -2,3 +2,10 @@ anthropic
 typer
 openai
 filelock
+pandas
+scipy
+seaborn
+matplotlib
+numpy
+scipy
+
