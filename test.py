@@ -9,7 +9,6 @@ from rich.progress import (
 from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
-from rich.text import Text
 from rich import box
 from typing import Tuple, List, Optional
 from multiprocessing import Pool
@@ -407,13 +406,15 @@ def show_memory_corruption(result: TestResult, console: Console):
     console.print(f"[bold red]KLEE output not found for {result.test}[/]")
     return
 
-  console.print(Panel(
-    f"[bold cyan]{result.test}[/]",
-    title="Test Details",
-    title_align="left",
-    border_style="cyan",
-    box=box.ROUNDED
-  ))
+  console.print(
+    Panel(
+      f"[bold cyan]{result.test}[/]",
+      title="Test Details",
+      title_align="left",
+      border_style="cyan",
+      box=box.ROUNDED,
+    )
+  )
 
   error_found = False
   with open(f"klee/{result.problem}/{result.test}/out/messages.txt", "r") as f:
@@ -427,13 +428,15 @@ def show_memory_corruption(result: TestResult, console: Console):
       line_num = int(m.group(1))
       crpt = m.group(2)
 
-      console.print(Panel(
-        f"[bold red]{crpt}[/]",
-        title="Memory Error",
-        title_align="left",
-        border_style="red",
-        box=box.ROUNDED
-      ))
+      console.print(
+        Panel(
+          f"[bold red]{crpt}[/]",
+          title="Memory Error",
+          title_align="left",
+          border_style="red",
+          box=box.ROUNDED,
+        )
+      )
 
       # Read the entire file to show context
       with open(f"template/{result.problem}/tests/{result.test}.c", "r") as src_file:
@@ -449,20 +452,18 @@ def show_memory_corruption(result: TestResult, console: Console):
       # Create syntax highlighted code
       code = "".join(context_lines)
       syntax = Syntax(
-        code,
-        "c",
-        line_numbers=True,
-        start_line=start_line + 1,
-        highlight_lines=[line_num]
+        code, "c", line_numbers=True, start_line=start_line + 1, highlight_lines=[line_num]
       )
 
-      console.print(Panel(
-        syntax,
-        title="Source Code Context",
-        title_align="left",
-        border_style="blue",
-        box=box.ROUNDED
-      ))
+      console.print(
+        Panel(
+          syntax,
+          title="Source Code Context",
+          title_align="left",
+          border_style="blue",
+          box=box.ROUNDED,
+        )
+      )
 
   if not error_found:
     console.print("[yellow]No specific memory error details found in the output.[/]")
@@ -488,10 +489,12 @@ def analyze(
 ):
   console = Console()
 
-  console.print(Panel(
-    f"[bold]Analyzing memory corruption issues for [cyan]{template}[/cyan][/]",
-    border_style="green"
-  ))
+  console.print(
+    Panel(
+      f"[bold]Analyzing memory corruption issues for [cyan]{template}[/cyan][/]",
+      border_style="green",
+    )
+  )
 
   with open(STAT_FILE, "r") as f:
     reader = csv.reader(f)
@@ -534,9 +537,12 @@ def analyze(
 
   console.print(f"[green]Found [bold]{len(results)}[/] memory corruption issues.[/]")
 
+  console.print("[dim]Press enter to start[/]", end="")
+  input()
+
   for i, result in enumerate(results):
     console.clear()
-    console.rule(f"[bold]Issue {i+1}/{len(results)}: {result.llm} - {result.tag}")
+    console.rule(f"[bold]Issue {i + 1}/{len(results)}: {result.llm} - {result.tag}")
     show_memory_corruption(result, console)
 
     # Don't prompt for the last item
@@ -544,10 +550,10 @@ def analyze(
       console.print("[dim]Press enter to continue...[/]", end="")
       input()
 
-  console.print(Panel(
-    "[bold green]Analysis complete![/]",
-    border_style="green"
-  ))
+  console.print("[dim]Press enter to finish[/]", end="")
+  input()
+
+  console.print(Panel("[bold green]Analysis complete![/]", border_style="green"))
 
 
 def cli():
