@@ -6,6 +6,11 @@ from rich.progress import (
   TextColumn,
   TimeElapsedColumn,
 )
+from rich.console import Console
+from rich.panel import Panel
+from rich.syntax import Syntax
+from rich.text import Text
+from rich import box
 from typing import Tuple, List, Optional
 from multiprocessing import Pool
 from filelock import FileLock
@@ -19,6 +24,7 @@ import shutil
 import typer
 import csv
 import os
+import re
 
 from inject import INJECTS, Inject
 from llm import LLM, ChatGPT, Claude, DeepSeek
@@ -46,7 +52,7 @@ class TestResult:
     bug &= not failed
     crpt &= not failed
     self.problem = problem
-    self.llm = test[:test.find("_")]
+    self.llm = test[: test.find("_")]
     self.test = test
     self.tag = tag
     self.bug = bug
@@ -63,7 +69,9 @@ class TestResult:
           writer.writerow(["Problem", "LLM", "Test", "Tag", "Bug", "Crpt", "Failed"])
       with open(STAT_FILE, "a") as f:
         writer = csv.writer(f)
-        writer.writerow([self.problem, self.llm, self.test, self.tag, self.bug, self.crpt, self.failed])
+        writer.writerow(
+          [self.problem, self.llm, self.test, self.tag, self.bug, self.crpt, self.failed]
+        )
 
 
 app = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
@@ -243,7 +251,7 @@ def list(
 
 def cache_worker(template: str, test: str):
   try:
-    run_test(template, test, tag=test[test.find("_")+1:test.rfind("_")])
+    run_test(template, test, tag=test[test.find("_") + 1 : test.rfind("_")])
     return (test, None)
   except Exception as e:
     return (test, str(e))
@@ -298,11 +306,10 @@ class Model(str, Enum):
   deepseek = "deepseek"
 
 
-LLMS = {
-  Model.claude: Claude, Model.chatgpt: ChatGPT, Model.deepseek: DeepSeek
-}
+LLMS = {Model.claude: Claude, Model.chatgpt: ChatGPT, Model.deepseek: DeepSeek}
 
 CLIENTS = dict()
+
 
 def init_clients(llms: Optional[List[Model]] = None):
   if llms is None:
@@ -389,6 +396,158 @@ def run(
           typer.echo(f"Error generating with {name}: {err}")
         if not VERBOSE:
           progress.update(task, advance=1)
+
+
+def show_memory_corruption(result: TestResult, console: Console):
+  if not os.path.exists(f"template/{result.problem}/tests/{result.test}.c"):
+    console.print(f"[bold red]Test {result.test} not found[/]")
+    return
+
+  if not os.path.exists(f"klee/{result.problem}/{result.test}/out/messages.txt"):
+    console.print(f"[bold red]KLEE output not found for {result.test}[/]")
+    return
+
+  console.print(Panel(
+    f"[bold cyan]{result.test}[/]",
+    title="Test Details",
+    title_align="left",
+    border_style="cyan",
+    box=box.ROUNDED
+  ))
+
+  error_found = False
+  with open(f"klee/{result.problem}/{result.test}/out/messages.txt", "r") as f:
+    for line in f:
+      line_re = r"test.c:(\d+): memory error: (.*)\n$"
+      m = re.search(line_re, line)
+      if not m:
+        continue
+
+      error_found = True
+      line_num = int(m.group(1))
+      crpt = m.group(2)
+
+      console.print(Panel(
+        f"[bold red]{crpt}[/]",
+        title="Memory Error",
+        title_align="left",
+        border_style="red",
+        box=box.ROUNDED
+      ))
+
+      # Read the entire file to show context
+      with open(f"template/{result.problem}/tests/{result.test}.c", "r") as src_file:
+        source_lines = src_file.readlines()
+
+      # Get context (lines before and after)
+      start_line = max(0, line_num - 3)
+      end_line = min(len(source_lines), line_num + 2)
+
+      # Extract the relevant lines with context
+      context_lines = source_lines[start_line:end_line]
+
+      # Create syntax highlighted code
+      code = "".join(context_lines)
+      syntax = Syntax(
+        code,
+        "c",
+        line_numbers=True,
+        start_line=start_line + 1,
+        highlight_lines=[line_num]
+      )
+
+      console.print(Panel(
+        syntax,
+        title="Source Code Context",
+        title_align="left",
+        border_style="blue",
+        box=box.ROUNDED
+      ))
+
+  if not error_found:
+    console.print("[yellow]No specific memory error details found in the output.[/]")
+
+
+@app.command()
+def analyze(
+  template: str = typer.Argument(
+    help="specify template to run cache on",
+  ),
+  llms: Optional[List[Model]] = typer.Option(
+    None,
+    "--llm",
+    "-l",
+    help="specify LLM to filter on",
+  ),
+  tags: Optional[List[Inject]] = typer.Option(
+    [],
+    "--tag",
+    "-t",
+    help="specify which injection to filter on",
+  ),
+):
+  console = Console()
+
+  console.print(Panel(
+    f"[bold]Analyzing memory corruption issues for [cyan]{template}[/cyan][/]",
+    border_style="green"
+  ))
+
+  with open(STAT_FILE, "r") as f:
+    reader = csv.reader(f)
+    results = []
+    # Skip header row
+    next(reader, None)
+    for row in reader:
+      try:
+        problem, llm_name, test, tag, bug, crpt, failed = row
+        test = TestResult(
+          problem,
+          test,
+          tag,
+          bug == "True",
+          crpt == "True",
+          failed == "True",
+        )
+
+        if template != test.problem:
+          continue
+
+        if (tags or test.tag) and "_".join(t.value for t in tags) != test.tag:
+          continue
+
+        if llms and test.llm not in [l.value for l in llms]:
+          continue
+
+        if not test.crpt:
+          continue
+
+        results.append(test)
+      except Exception as e:
+        if VERBOSE:
+          console.print(f"[red]Error processing row: {e}[/]")
+          console.print(f"[dim]{row}[/]")
+
+  if not results:
+    console.print("[bold yellow]No memory corruption issues found matching the criteria.[/]")
+    exit(0)
+
+  console.print(f"[green]Found [bold]{len(results)}[/] memory corruption issues.[/]")
+
+  for i, result in enumerate(results):
+    console.rule(f"[bold]Issue {i+1}/{len(results)}: {result.llm} - {result.tag}")
+    show_memory_corruption(result, console)
+
+    # Don't prompt for the last item
+    if i < len(results) - 1:
+      console.print("[dim]Press enter to continue...[/]", end="")
+      input()
+      console.print()
+
+  console.print(Panel(
+    "[bold green]Analysis complete![/]",
+    border_style="green"
+  ))
 
 
 def cli():

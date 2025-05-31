@@ -41,13 +41,13 @@ array_index/
 └── tests
     └── ...
 ```
-+ bugs.c
++ bugs.c \
   is the klee setup file that comparesn file contains the problem statement and the prompt used to generate the test
-+ oracle.c
++ oracle.c \
   this files contain the code that is that fullfills the task and used for comparsion against the generated code
-+ problem.md
++ problem.md \
   this markdown file contains the problem statement and the prompt used to generate the test
-+ tests/
++ tests/ \
   this folder contains the generated tests
 
 ---
