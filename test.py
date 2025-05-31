@@ -535,6 +535,7 @@ def analyze(
   console.print(f"[green]Found [bold]{len(results)}[/] memory corruption issues.[/]")
 
   for i, result in enumerate(results):
+    console.clear()
     console.rule(f"[bold]Issue {i+1}/{len(results)}: {result.llm} - {result.tag}")
     show_memory_corruption(result, console)
 
@@ -542,7 +543,6 @@ def analyze(
     if i < len(results) - 1:
       console.print("[dim]Press enter to continue...[/]", end="")
       input()
-      console.print()
 
   console.print(Panel(
     "[bold green]Analysis complete![/]",
