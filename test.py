@@ -513,7 +513,7 @@ def analyze(
         if template != test.problem:
           continue
 
-        if (tags or test.tag) and "_".join(t.value for t in tags) != test.tag:
+        if "_".join(t.value for t in tags) != test.tag:
           continue
 
         if llms and test.llm not in [l.value for l in llms]:
