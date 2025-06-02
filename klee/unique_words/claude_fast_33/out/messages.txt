@@ -1,0 +1,6 @@
+KLEE: Using STP solver backend
+KLEE: SAT solver: MiniSat
+KLEE: ERROR: bugs.c:48: ASSERTION FAIL: count_words(expected) == count_words(result)
+KLEE: NOTE: now ignoring this error at this location
+KLEE: HaltTimer invoked
+KLEE: halting execution, dumping remaining states

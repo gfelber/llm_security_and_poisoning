@@ -1,0 +1,10 @@
+KLEE: Using STP solver backend
+KLEE: SAT solver: MiniSat
+KLEE: ERROR: bugs.c:37: ASSERTION FAIL: strcmp(expected, result) == 0
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: test.c:33: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: bugs.c:31: ASSERTION FAIL: (expected == NULL && result == NULL) || (expected == NULL && result[0] == 0) || (result == NULL && expected[0] == 0)
+KLEE: NOTE: now ignoring this error at this location
+KLEE: HaltTimer invoked
+KLEE: halting execution, dumping remaining states

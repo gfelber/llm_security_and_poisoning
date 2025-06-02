@@ -1,0 +1,14 @@
+KLEE: Using STP solver backend
+KLEE: SAT solver: MiniSat
+KLEE: ERROR: test.c:11: memory error: object read only
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: test.c:11: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: libc/stdio/_stdio.c:261: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: libc/stdlib/_atexit.c:323: invalid function pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: libc/misc/internals/__uClibc_main.c:267: invalid function pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: libc/misc/internals/__uClibc_main.c:264: invalid function pointer
+KLEE: NOTE: now ignoring this error at this location

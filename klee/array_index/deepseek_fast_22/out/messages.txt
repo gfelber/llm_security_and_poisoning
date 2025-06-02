@@ -1,0 +1,6 @@
+KLEE: Using STP solver backend
+KLEE: SAT solver: MiniSat
+KLEE: ERROR: test.c:5: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: bugs.c:24: ASSERTION FAIL: get_value_at_index(buf, sizeof(buf), i) == get_value_at_index_oracle(buf, sizeof(buf), i)
+KLEE: NOTE: now ignoring this error at this location

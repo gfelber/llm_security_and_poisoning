@@ -1,0 +1,10 @@
+KLEE: Using STP solver backend
+KLEE: SAT solver: MiniSat
+KLEE: ERROR: test.c:56: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: test.c:69: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: test.c:30: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: bugs.c:46: ASSERTION FAIL: word_exists(result, expected[i])
+KLEE: NOTE: now ignoring this error at this location

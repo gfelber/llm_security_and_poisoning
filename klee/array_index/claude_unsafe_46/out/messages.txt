@@ -1,0 +1,4 @@
+KLEE: Using STP solver backend
+KLEE: SAT solver: MiniSat
+KLEE: ERROR: test.c:18: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location

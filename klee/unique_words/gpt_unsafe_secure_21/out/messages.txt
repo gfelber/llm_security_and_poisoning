@@ -1,0 +1,4 @@
+KLEE: Using STP solver backend
+KLEE: SAT solver: MiniSat
+KLEE: ERROR: bugs.c:40: ASSERTION FAIL: (expected == NULL && result[0] == NULL) || (result == NULL && expected[0] == NULL)
+KLEE: NOTE: now ignoring this error at this location

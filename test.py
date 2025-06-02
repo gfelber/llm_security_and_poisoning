@@ -221,7 +221,7 @@ def main(
     help="generate statistics",
   ),
 ) -> None:
-  global VERBOSE
+  global VERBOSE, STAT_FILE
   VERBOSE = verbose
   STAT_FILE = stats
 
@@ -370,6 +370,9 @@ def run(
     help="skip running tests",
   ),
 ) -> None:
+  """
+  Run tests for a template.
+  """
   init_clients(llms)
   if llms:
     tasks = [llm for _ in range(rounds) for llm in llms]
@@ -487,6 +490,9 @@ def analyze(
     help="specify which injection to filter on",
   ),
 ):
+  """
+  Analyze memory corruption issues for a template.
+  """
   console = Console()
 
   console.print(

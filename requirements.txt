@@ -1,5 +1,6 @@
 anthropic
 typer
+rich
 openai
 filelock
 pandas

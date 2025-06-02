@@ -1,0 +1,12 @@
+KLEE: Using STP solver backend
+KLEE: SAT solver: MiniSat
+KLEE: ERROR: bugs.c:22: invalid klee_assume call (provably false)
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: test.c:9: concretized symbolic size
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: test.c:40: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: bugs.c:36: memory error: out of bound pointer
+KLEE: NOTE: now ignoring this error at this location
+KLEE: ERROR: bugs.c:29: ASSERTION FAIL: (expected == NULL && result == NULL) || (expected == NULL && result[0] == 0) || (result == NULL && expected[0] == 0)
+KLEE: NOTE: now ignoring this error at this location
