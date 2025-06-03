@@ -15,7 +15,6 @@ from multiprocessing import Pool
 from filelock import FileLock
 from functools import partial
 from time import sleep
-from enum import Enum
 import subprocess
 import tempfile
 import random
@@ -26,7 +25,7 @@ import os
 import re
 
 from inject import INJECTS, Inject
-from llm import LLM, ChatGPT, Claude, DeepSeek
+from llm import Model, LLM, ChatGPT, Claude, DeepSeek
 
 
 class KleeException(Exception):
@@ -299,10 +298,6 @@ def cache(
           progress.update(task, advance=1)
 
 
-class Model(str, Enum):
-  claude = "claude"
-  chatgpt = "chatgpt"
-  deepseek = "deepseek"
 
 
 LLMS = {Model.claude: Claude, Model.chatgpt: ChatGPT, Model.deepseek: DeepSeek}

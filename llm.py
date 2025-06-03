@@ -2,6 +2,7 @@ import anthropic
 from openai import OpenAI
 from abc import ABC
 from typing import Optional, Tuple
+from enum import Enum
 import os
 import re
 
@@ -13,6 +14,12 @@ def parse_code(content: str) -> Optional[str]:
   for m in re.finditer(r"```[cC]{0,1}\+{0,2}\n([^`]+)```", content, re.MULTILINE):
     return m.group(1)
   return None
+
+
+class Model(str, Enum):
+  claude = "claude"
+  chatgpt = "chatgpt"
+  deepseek = "deepseek"
 
 
 class LLM(ABC):
