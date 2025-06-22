@@ -137,17 +137,3 @@ Prompt design was the most impactful factor in output safety:
 #### 📉 Bug Rates by Prompt Strategy
 
 ![prompt_impact](./pics/figure4_prompt_impact.png)
-
----
-
-### Statistical Analysis
-
-A chi-square test confirms that model identity and prompt type significantly affect bug rates.
-
-- GPT: **43.0%** bug rate
-- Claude: **33.2%**
-- DeepSeek: **36.0%**
-
-#### 📈 Bug Rate by Model (95% CI)
-
-![statistical_analysis](./pics/figure5_statistical_analysis.png)
