@@ -57,7 +57,7 @@ labels = outcome_counts.index
 outcomes = outcome_counts.columns
 bottom = np.zeros(len(labels))
 
-fig, ax = plt.subplots(figsize=(7,4))
+fig, ax = plt.subplots(figsize=(8,4))
 for idx, outcome in enumerate(outcomes):
     vals = outcome_counts[outcome].values
     ax.bar(labels, vals, bottom=bottom, label=outcome, color=bar_palette[idx % len(bar_palette)])
